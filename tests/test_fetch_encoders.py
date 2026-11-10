@@ -9,9 +9,22 @@ import hashlib
 import importlib.util
 import json
 import sys
+import types
 from pathlib import Path
 
 import pytest
+
+
+def _fake_hub(monkeypatch, fn):
+    """Install a fake huggingface_hub module for one test.
+
+    The offline suite must pass whether or not the real package is
+    installed (the dev extra does not include it), so we inject into
+    sys.modules rather than patching the real module.
+    """
+    fake = types.ModuleType("huggingface_hub")
+    fake.snapshot_download = fn
+    monkeypatch.setitem(sys.modules, "huggingface_hub", fake)
 
 _REPO = Path(__file__).resolve().parents[1]
 _spec = importlib.util.spec_from_file_location(
@@ -41,10 +54,7 @@ class TestEnsureEncoder:
     def test_present_locally_never_touches_network(self, entry, monkeypatch):
         e, root = entry
         _place(root)
-        monkeypatch.setattr(
-            "huggingface_hub.snapshot_download",
-            lambda **kw: pytest.fail("network access attempted"),
-        )
+        _fake_hub(monkeypatch, lambda **kw: pytest.fail("network access attempted"))
         out = fe.ensure_encoder(e, root)
         assert out == root / "mpnet"
 
@@ -56,17 +66,14 @@ class TestEnsureEncoder:
             (root / "mpnet" / "model.safetensors").write_bytes(b"fake-weights")
             return str(root / "mpnet")
 
-        monkeypatch.setattr("huggingface_hub.snapshot_download", fake_download)
+        _fake_hub(monkeypatch, fake_download)
         out = fe.ensure_encoder(e, root)
         assert (out / "model.safetensors").exists()
 
     def test_auto_disabled_is_an_actionable_error(self, entry, monkeypatch):
         e, root = entry
         (root / "mpnet").mkdir()
-        monkeypatch.setattr(
-            "huggingface_hub.snapshot_download",
-            lambda **kw: pytest.fail("network access attempted"),
-        )
+        _fake_hub(monkeypatch, lambda **kw: pytest.fail("network access attempted"))
         with pytest.raises(SystemExit, match="CINE_REC_AUTO_FETCH"):
             fe.ensure_encoder(e, root, auto=False)
 
@@ -90,7 +97,7 @@ class TestEnsureEncoder:
         def fake_download(**kw):
             (root / "mpnet" / "model.safetensors").write_bytes(b"TAMPERED")
 
-        monkeypatch.setattr("huggingface_hub.snapshot_download", fake_download)
+        _fake_hub(monkeypatch, fake_download)
         with pytest.raises(SystemExit, match="sha256 mismatch"):
             fe.ensure_encoder(e, root)
 
