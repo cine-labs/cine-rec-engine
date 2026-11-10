@@ -4,6 +4,14 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions follow [SemVer](https://semver.org/).
 
+## [1.3.1] — 2026-11-10
+
+### Fixed — CI
+- No engine changes. `rust-wheels` builds one abi3 wheel per platform
+  (Python 3.10 only) instead of a 16-job matrix whose skip-noop jobs
+  could starve on macOS runners and fail a release run without
+  affecting any artifact. Same published wheels, smaller queue.
+
 ## [1.3.0] — 2026-11-10
 
 ### Added — published tuned encoders
