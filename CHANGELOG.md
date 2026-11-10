@@ -4,6 +4,26 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions follow [SemVer](https://semver.org/).
 
+## [1.3.0] — 2026-11-10
+
+### Added — published tuned encoders
+- Five tuned sentence encoders (BGE / MPNet / E5 / MiniLM families)
+  published on Hugging Face under `cine-labs`, sha256-pinned in
+  `models/MANIFEST.json`.
+- `models/fetch_encoders.py` — fetch a pinned encoder (verifies the
+  sha256 after download) and embed the whole catalog into
+  `tmdb_media.embedding_<space>` in one command; honors the optional
+  `tmdb_cinematic` enrichment template and the E5 query/passage
+  prefixes. `pip install "cine-rec-engine[encoders]"` pulls the deps.
+  On-demand download is the default: `embed` fetches a missing encoder
+  automatically (already-downloaded encoders are never re-fetched);
+  `CINE_REC_AUTO_FETCH=0` / `--no-fetch` keeps installs offline.
+- The five spaces are registered in `REC_MODELS` (`bge`, `mpnet`,
+  `mpnet_enrich`, `e5_enrich`, `minilm_tuned`) — selectable via
+  `CINE_REC_EMBEDDING` / `rec_model=` like any existing space.
+- `models/README.md` rewritten: quickstart, space-selection guide,
+  canonical input format, base-model attribution.
+
 ## [1.2.0] — 2026-11-10
 
 ### Added — Gorse External Recommender support

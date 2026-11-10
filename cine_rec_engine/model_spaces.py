@@ -39,6 +39,42 @@ REC_MODELS: dict = {
         "column": "embedding_minilm",
         "cosine_weight": 10.0,
     },
+    # ---- published tuned encoders (cine-labs on Hugging Face) --------
+    # Fitted on this project's title-similarity data; pinned (repo,
+    # revision, sha256) in models/MANIFEST.json and fetched with
+    # models/fetch_encoders.py. Catalog texts follow the canonical
+    # template in models/README.md; spaces whose MANIFEST entry lists a
+    # prefix prepend it on the matching side (E5 convention). Solo
+    # cosine weights are safe defaults, not fitted constants.
+    "bge": {
+        # English BGE-base tune (768-dim) — strongest English-only space.
+        "column": "embedding_bge",
+        "cosine_weight": 10.0,
+    },
+    "mpnet": {
+        # Multilingual MPNet tune (768-dim).
+        "column": "embedding_mpnet",
+        "cosine_weight": 10.0,
+    },
+    "mpnet_enrich": {
+        # MPNet tune trained on canonical texts that include cinematic
+        # tags; runs on the Title+Overview fallback, best with
+        # enrichment.
+        "column": "embedding_mpnet_enrich",
+        "cosine_weight": 10.0,
+    },
+    "e5_enrich": {
+        # Multilingual E5 tune with the E5 prefix convention
+        # ("query: " / "passage: ") — fetch_encoders.py adds them.
+        "column": "embedding_e5_enrich",
+        "cosine_weight": 10.0,
+    },
+    "minilm_tuned": {
+        # Lightweight fine-tune of the MiniLM reference encoder
+        # (384-dim) — the cheapest tuned space.
+        "column": "embedding_minilm_tuned",
+        "cosine_weight": 10.0,
+    },
 }
 
 

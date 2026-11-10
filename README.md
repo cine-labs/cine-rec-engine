@@ -360,6 +360,12 @@ included: the larger labeled training sets the weights were fitted on and
 the optional narrative-tag enrichment — the fitted coefficients
 themselves are published in full.
 
+Alongside the weights, five **tuned encoders** for the embedding recall
+channel are published on Hugging Face (`cine-labs/…`, sha256-pinned in
+[`models/MANIFEST.json`](models/MANIFEST.json)) — one command fetches one
+and embeds your catalog; bring-your-own encoders still work. See
+[`models/README.md`](models/README.md).
+
 ### Fit your own
 
 The same schema is a self-service contract. Collect preference judgments

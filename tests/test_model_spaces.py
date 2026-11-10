@@ -1,5 +1,8 @@
 """Registry behavior: space/column mapping and name normalization."""
 
+import json
+from pathlib import Path
+
 from cine_rec_engine.model_spaces import (
     REC_MODELS,
     column_for,
@@ -46,3 +49,38 @@ class TestServeAcceptsRegistryKeys:
         assert _validate_model("minilm") == "minilm"
         assert _validate_model("original") == "original"
         assert _validate_model(None) is None
+
+
+class TestPublishedManifest:
+    """models/MANIFEST.json is the pin list for the published encoders —
+    it must stay consistent with the registry (space names, columns)."""
+
+    MANIFEST = Path(__file__).resolve().parents[1] / "models" / "MANIFEST.json"
+
+    @classmethod
+    def entries(cls):
+        return json.loads(cls.MANIFEST.read_text())["encoders"]
+
+    def test_every_manifest_space_is_registered(self):
+        for e in self.entries():
+            assert e["space"] in REC_MODELS, f"{e['space']} missing from REC_MODELS"
+
+    def test_columns_follow_the_space_convention(self):
+        for e in self.entries():
+            assert column_for(e["space"]) == f"embedding_{e['space']}"
+            assert REC_MODELS[e["space"]]["column"] == e["column"]
+
+    def test_published_spaces_keep_the_safe_default_weight(self):
+        for e in self.entries():
+            assert REC_MODELS[e["space"]]["cosine_weight"] == 10.0
+
+    def test_entries_are_pinned(self):
+        for e in self.entries():
+            assert e["repo"].startswith("cine-labs/")
+            assert len(e["sha256"]) == 64
+            assert e["dim"] in (384, 768)
+
+    def test_e5_space_declares_prefixes(self):
+        e = {x["space"]: x for x in self.entries()}["e5_enrich"]
+        assert e["query_prefix"] == "query: "
+        assert e["passage_prefix"] == "passage: "

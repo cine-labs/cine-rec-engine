@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "org": "cine-labs",
+  "description": "Tuned encoders for the embedding recall channel. Each entry pins the Hugging Face repo and the sha256 of model.safetensors; fetch_encoders.py verifies the hash after download. Spaces are registered in cine_rec_engine/model_spaces.py and selected with CINE_REC_EMBEDDING=<space>.",
+  "encoders": [
+    {
+      "space": "bge",
+      "repo": "cine-labs/cine-embed-bge-v1",
+      "revision": "main",
+      "dim": 768,
+      "column": "embedding_bge",
+      "languages": "en",
+      "query_prefix": null,
+      "passage_prefix": null,
+      "size_bytes": 437951328,
+      "sha256": "4cde577e48a0f1a02487d663cb53d59f51783eee11e7e81fbe4872579fcb02fb"
+    },
+    {
+      "space": "mpnet",
+      "repo": "cine-labs/cine-embed-mpnet-v1",
+      "revision": "main",
+      "dim": 768,
+      "column": "embedding_mpnet",
+      "languages": "multilingual",
+      "query_prefix": null,
+      "passage_prefix": null,
+      "size_bytes": 556109672,
+      "sha256": "f6b2500770c365ea5a4d74416b3d8bab678990e5941048ae34bba1b3e979b401"
+    },
+    {
+      "space": "mpnet_enrich",
+      "repo": "cine-labs/cine-embed-mpnet-enrich-v1",
+      "revision": "main",
+      "dim": 768,
+      "column": "embedding_mpnet_enrich",
+      "languages": "multilingual",
+      "query_prefix": null,
+      "passage_prefix": null,
+      "size_bytes": 556109672,
+      "sha256": "d688beebb64457a3ede6550be2a8d09870a1d61344cf6fbcd2a0590d2eb28be1"
+    },
+    {
+      "space": "e5_enrich",
+      "repo": "cine-labs/cine-embed-e5-enrich-v1",
+      "revision": "main",
+      "dim": 768,
+      "column": "embedding_e5_enrich",
+      "languages": "multilingual",
+      "query_prefix": "query: ",
+      "passage_prefix": "passage: ",
+      "size_bytes": 556109672,
+      "sha256": "92a60a4e98e2ad4c8b63e553e5994ace77ce1a9e0def4175e325698c79e745c0"
+    },
+    {
+      "space": "minilm_tuned",
+      "repo": "cine-labs/cine-embed-minilm-v1",
+      "revision": "main",
+      "dim": 384,
+      "column": "embedding_minilm_tuned",
+      "languages": "en",
+      "query_prefix": null,
+      "passage_prefix": null,
+      "size_bytes": 90864192,
+      "sha256": "436d187bc75d4cc8a91f43f00aece387f56bb53e354a0e10a9f50951b4b21cf6"
+    }
+  ]
+}
