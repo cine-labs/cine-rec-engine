@@ -1,0 +1,153 @@
+# cine-rec-engine as a Gorse External Recommender.
+#
+#   cd examples/gorse && docker compose up -d --build
+#   docker compose run --rm bootstrap
+#   docker compose run --rm sync
+#   curl 'localhost:8000/v1/gorse/recommend/42?limit=5'
+#   curl 'localhost:8087/api/recommend/42?n=5'
+#
+# Ports: cine-rec :8000 · Gorse API :8087 · dashboard :8088 · Postgres :54330
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo
+      POSTGRES_DB: demo
+    ports:
+      - "54330:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U demo"]
+      interval: 2s
+      retries: 20
+
+  mysql:
+    image: mysql/mysql-server:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root_pass
+      MYSQL_DATABASE: gorse
+      MYSQL_USER: gorse
+      MYSQL_PASSWORD: gorse_pass
+    volumes:
+      - gorse_mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot_pass"]
+      interval: 5s
+      retries: 30
+      start_period: 20s
+
+  cine-rec:
+    build: ../..
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://demo:demo@db:5432/demo
+      CINE_REC_AUTO_INIT: "1"
+      CINE_REC_POOL_SIZE: "10"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).status==200 else 1)",
+        ]
+      interval: 5s
+      retries: 20
+      start_period: 15s
+    restart: unless-stopped
+
+  gorse-master:
+    image: zhenghaoz/gorse-master:0.5.11
+    ports:
+      - "8086:8086"
+      - "8088:8088"
+    environment:
+      GORSE_CACHE_STORE: mysql://gorse:gorse_pass@tcp(mysql:3306)/gorse
+      GORSE_DATA_STORE: mysql://gorse:gorse_pass@tcp(mysql:3306)/gorse
+    command: >
+      -c /etc/gorse/config.toml
+      --log-path /var/log/gorse/master.log
+    volumes:
+      - ./gorse-config.toml:/etc/gorse/config.toml:ro
+      - gorse_log:/var/log/gorse
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  gorse-server:
+    image: zhenghaoz/gorse-server:0.5.11
+    ports:
+      - "8087:8087"
+    command: >
+      --master-host gorse-master --master-port 8086
+      --http-host 0.0.0.0 --http-port 8087
+      --log-path /var/log/gorse/server.log
+    volumes:
+      - gorse_log:/var/log/gorse
+    depends_on:
+      - gorse-master
+    restart: unless-stopped
+
+  gorse-worker:
+    image: zhenghaoz/gorse-worker:0.5.11
+    ports:
+      - "8089:8089"
+    command: >
+      --master-host gorse-master --master-port 8086
+      --http-host 0.0.0.0 --http-port 8089
+      --log-path /var/log/gorse/worker.log
+    volumes:
+      - gorse_log:/var/log/gorse
+    depends_on:
+      - gorse-master
+    restart: unless-stopped
+
+  bootstrap:
+    image: python:3.12-slim
+    profiles: ["setup"]
+    working_dir: /engine
+    volumes:
+      - ../..:/engine:ro
+    environment:
+      DATABASE_URL: postgresql://demo:demo@db:5432/demo
+      DEMO_USER_ID: "42"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      bash -c "pip -q install asyncpg loguru aiohttp pgvector &&
+               PYTHONPATH=/engine python examples/gorse/bootstrap.py"
+
+  sync:
+    image: python:3.12-slim
+    profiles: ["setup"]
+    working_dir: /engine
+    volumes:
+      - ../..:/engine:ro
+    environment:
+      DATABASE_URL: postgresql://demo:demo@db:5432/demo
+      GORSE_URL: http://gorse-server:8087
+    depends_on:
+      db:
+        condition: service_healthy
+      gorse-server:
+        condition: service_started
+      cine-rec:
+        condition: service_healthy
+    command:
+      - bash
+      - -c
+      - |
+        pip -q install asyncpg
+        python examples/gorse/sync_to_gorse.py \
+          --dsn "$$DATABASE_URL" --gorse "$$GORSE_URL"
+
+volumes:
+  gorse_mysql:
+  gorse_log:

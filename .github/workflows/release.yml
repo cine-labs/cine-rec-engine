@@ -66,7 +66,8 @@ jobs:
           assert (pkg / "sql" / "schema.sql").exists(), "sql/schema.sql missing from the wheel"
           app = serve.create_app(service=object())
           paths = {getattr(r, "path", "") for r in app.routes}
-          assert {"/health", "/v1/similar"} <= paths, sorted(paths)
+          assert {"/health", "/v1/similar",
+                  "/v1/gorse/recommend/{user_id}"} <= paths, sorted(paths)
           print("wheel smoke ok:", cine_rec_engine.__version__)
           PY
       - name: Distributions
@@ -75,3 +76,36 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           attestations: true
+
+  # Official container image — same tag gate as PyPI (vX.Y.Z).
+  # Consumers: docker pull ghcr.io/dovberkaplan/cine-rec-engine:X.Y.Z
+  docker:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Image tags from the git tag
+        id: meta
+        run: |
+          set -eu
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "image=ghcr.io/dovberkaplan/cine-rec-engine" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.version }}
+            ${{ steps.meta.outputs.image }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

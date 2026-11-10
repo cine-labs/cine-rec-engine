@@ -1,0 +1,52 @@
+# Minimal Gorse config for the cine-rec External Recommender demo.
+# Store URLs are overridden by GORSE_CACHE_STORE / GORSE_DATA_STORE in compose.
+
+[database]
+cache_store = "mysql://gorse:gorse_pass@tcp(mysql:3306)/gorse"
+data_store = "mysql://gorse:gorse_pass@tcp(mysql:3306)/gorse"
+
+[master]
+port = 8086
+host = "0.0.0.0"
+http_port = 8088
+http_host = "0.0.0.0"
+n_jobs = 1
+
+[server]
+default_n = 10
+api_key = ""
+auto_insert_user = true
+auto_insert_item = true
+
+[recommend]
+cache_size = 100
+cache_expire = "72h"
+context_size = 100
+
+[recommend.data_source]
+positive_feedback_types = ["watch", "like", "star"]
+read_feedback_types = ["read", "watch"]
+
+[recommend.collaborative]
+type = "none"
+
+# Online: /api/recommend/{user} runs this script and returns its IDs.
+# There is no ?recommender= query param — selection is config-only.
+[[recommend.external]]
+name = "cine_rec"
+script = """
+const response = fetch(
+  "http://cine-rec:8000/v1/gorse/recommend/" + user_id + "?limit=100"
+);
+if (!response.ok) {
+  throw new Error(response.status + " " + response.body);
+}
+JSON.parse(response.body)
+"""
+
+[recommend.ranker]
+type = "none"
+recommenders = ["external/cine_rec"]
+
+[recommend.fallback]
+recommenders = ["external/cine_rec"]
