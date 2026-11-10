@@ -147,6 +147,42 @@ class TestForUser:
                           ).status_code == 400
 
 
+class TestGorseRecommend:
+    def test_returns_id_media_type_array(self, client):
+        r = client.get("/v1/gorse/recommend/42")
+        assert r.status_code == 200
+        assert r.json() == ["111:movie"]
+        user_id, kwargs = client.service.user_calls[-1]
+        assert user_id == 42
+        assert kwargs["limit"] == 100
+
+    def test_limit_passed_through(self, client):
+        r = client.get("/v1/gorse/recommend/7", params={"limit": 12})
+        assert r.status_code == 200
+        user_id, kwargs = client.service.user_calls[-1]
+        assert user_id == 7
+        assert kwargs["limit"] == 12
+
+    def test_non_numeric_user_rejected(self, client):
+        r = client.get("/v1/gorse/recommend/bob")
+        assert r.status_code == 400
+        assert "positive integer" in r.json()["detail"]
+
+    def test_zero_user_rejected(self, client):
+        assert client.get("/v1/gorse/recommend/0").status_code == 400
+
+    def test_empty_results(self, client):
+        async def _cold(user_id, **kwargs):
+            client.service.user_calls.append((user_id, kwargs))
+            return {"results": [], "reason": "cold_start",
+                    "seeds": [], "vector_used": False, "why": {}}
+
+        client.service.recommend_for_user = _cold
+        r = client.get("/v1/gorse/recommend/42")
+        assert r.status_code == 200
+        assert r.json() == []
+
+
 class TestSessionFilters:
     def test_filters_passed_to_engine_normalized(self, client):
         r = client.get("/v1/similar", params={
@@ -338,6 +374,7 @@ class TestV1OnlyRoutes:
     def test_openapi_lists_v1_paths_only(self, client):
         spec = client.get("/openapi.json").json()
         assert "/v1/similar" in spec["paths"]
+        assert "/v1/gorse/recommend/{user_id}" in spec["paths"]
         for bare in ("/similar", "/page", "/by-text", "/feedback",
                      "/for-user/{user_id}"):
             assert bare not in spec["paths"], bare

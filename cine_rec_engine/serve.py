@@ -16,6 +16,8 @@
     POST /v1/feedback                  one click/watch/skip/dislike outcome for
                                        a served title (impression-token gated)
     GET /v1/for-user/42?include_why=1  the personalized row
+    GET /v1/gorse/recommend/42         Gorse External Recommender adapter
+                                       (JSON array of "{id}:{media_type}")
 
 Zero config beyond DATABASE_URL: the engine degrades every optional
 channel, and user vectors rebuild on demand. The app factory accepts an
@@ -467,6 +469,43 @@ def create_app(
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
 
+    async def gorse_recommend(
+        request: Request,
+        user_id: str = Path(
+            ...,
+            description="Gorse user id — numeric string mapping 1:1 to "
+                        "cine-rec's integer user_id",
+        ),
+        limit: int = Query(
+            100, ge=1, le=MAX_LIMIT,
+            description="candidate count; Gorse scripts have no n, so "
+                        "default is generous and Gorse truncates",
+        ),
+    ):
+        """Gorse External Recommender adapter: raw JSON array of
+        "{tmdb_id}:{media_type}" strings. Cold start → []."""
+        try:
+            uid = int(user_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"user_id must be a positive integer string, got {user_id!r}",
+            )
+        if uid < 1:
+            raise HTTPException(
+                status_code=400,
+                detail=f"user_id must be a positive integer string, got {user_id!r}",
+            )
+        svc: RecommendationService = request.app.state.service
+        try:
+            payload = await svc.recommend_for_user(uid, limit=limit)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        return [
+            f"{r['tmdb_id']}:{r.get('media_type') or 'movie'}"
+            for r in payload.get("results") or []
+        ]
+
     # -- route registration: /v1/* is the canonical surface. The bare
     # pre-1.0 aliases were removed in 1.0.0 (docs/stability.md).
     for path, endpoint, methods in (
@@ -475,6 +514,7 @@ def create_app(
         ("/by-text", by_text_endpoint, ["GET"]),
         ("/feedback", feedback, ["POST"]),
         ("/for-user/{user_id}", for_user, ["GET"]),
+        ("/gorse/recommend/{user_id}", gorse_recommend, ["GET"]),
     ):
         app.add_api_route(f"/v1{path}", endpoint, methods=methods,
                           dependencies=auth_deps)

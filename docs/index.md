@@ -22,6 +22,8 @@ self-hosted system.
 - **[Public benchmark](benchmark.md)** — MovieLens-derived ground truth,
   reproducible end to end.
 - **[Stability policy](stability.md)** — what you can depend on pre-1.0.
+- **[Gorse integration](gorse.md)** — External Recommender adapter +
+  compose example.
 - **[Live demo](/demo/)** — precomputed by the real engine, no install.
 
 ## 60-second local run

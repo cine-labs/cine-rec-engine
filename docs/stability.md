@@ -7,10 +7,10 @@ stays available. In effect from 0.14.0.
 ## What is public API
 
 - **HTTP** — the `/v1/*` routes (`/v1/similar`, `/v1/page`,
-  `/v1/by-text`, `POST /v1/feedback`, `/v1/for-user/{user_id}`) plus
-  `/health` and `/metrics`, with their documented query/body parameters
-  and response fields. Additive response fields and optional parameters
-  are not breaking changes.
+  `/v1/by-text`, `POST /v1/feedback`, `/v1/for-user/{user_id}`,
+  `/v1/gorse/recommend/{user_id}`) plus `/health` and `/metrics`, with
+  their documented query/body parameters and response fields. Additive
+  response fields and optional parameters are not breaking changes.
 - **Python** — `RecommendationService` (`initialize`, `find_similar`,
   `recommend_for_user`), `create_app`, `record_event`,
   `record_feedback`, the table registry (`cine_rec_engine.tables`), and

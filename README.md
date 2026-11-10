@@ -91,10 +91,13 @@ DATABASE_URL=postgresql://user:pw@localhost/yourdb \
 # or equivalently: cine-rec serve --port 8000
 ```
 
-Or as a container (`docker build -t cine-rec-engine .`):
+Or as a container (published on version tags, or build locally):
 
 ```bash
-docker run -p 8000:8000 -e DATABASE_URL=postgresql://user:pw@host/db cine-rec-engine
+docker pull ghcr.io/dovberkaplan/cine-rec-engine:latest
+docker run -p 8000:8000 -e DATABASE_URL=postgresql://user:pw@host/db \
+    ghcr.io/dovberkaplan/cine-rec-engine:latest
+# or: docker build -t cine-rec-engine . && docker run ... cine-rec-engine
 ```
 
 Booting against an empty database? One env var applies the schema
@@ -103,7 +106,7 @@ first (idempotent — same files `cine-rec init` uses):
 ```bash
 docker run -p 8000:8000 \
     -e DATABASE_URL=postgresql://user:pw@host/db \
-    -e CINE_REC_AUTO_INIT=1 cine-rec-engine
+    -e CINE_REC_AUTO_INIT=1 ghcr.io/dovberkaplan/cine-rec-engine:latest
 ```
 
 For a self-host with compose (pool sizing, persistent feedback secret,
@@ -116,6 +119,7 @@ cd deploy && DATABASE_URL=postgresql://user:pw@host/db docker compose up -d
 ```bash
 curl 'localhost:8000/v1/similar?seed=155:movie,1396:tv&limit=10&user_id=42&year_min=1995&genres=80'
 curl 'localhost:8000/v1/for-user/42?include_why=true&limit=12&explore=0.15'
+curl 'localhost:8000/v1/gorse/recommend/42?limit=12'   # Gorse adapter: ["155:movie",…]
 curl 'localhost:8000/v1/page?user_id=42&rows=top_picks,because:155,discover,hidden_gems'
 curl 'localhost:8000/v1/by-text?q=like+Inception+but+darker'
 curl -X POST localhost:8000/v1/feedback -d '{"token":"<impression>","outcome":"watch","tmdb_id":111}'
@@ -146,6 +150,24 @@ no-history cold start (bring your own encoder via
 (click/watch/skip/dislike) adjusts the user's weights transactionally —
 no trainer, no cron. User vectors rebuild on demand behind every
 endpoint. `model=minilm` runs a whole request in one embedding space.
+
+## Integrating with Gorse
+
+Use cine-rec as a Gorse [External
+Recommender](https://gorse.io/docs/concepts/recommenders/external):
+`GET /v1/gorse/recommend/{user_id}` returns
+`["155:movie","1396:tv",…]`. Item IDs are `{tmdb_id}:{media_type}`;
+Gorse user IDs must be numeric strings. Wire the script in
+`gorse-config.toml` and put `external/cine_rec` in
+`ranker.recommenders` (there is no `?recommender=` query param).
+
+```bash
+cd examples/gorse && docker compose up -d --build
+docker compose run --rm bootstrap && docker compose run --rm sync
+curl 'localhost:8087/api/recommend/42?n=5'
+```
+
+Details: [docs/gorse.md](docs/gorse.md) · example stack: [examples/gorse/](examples/gorse/).
 
 ## Configuration
 
@@ -389,6 +411,7 @@ cine_rec_engine/    the engine (recall · scoring · ranking · weights)
 ingest/             built-in TMDB mirror loader (bootstrap + daily refresh)
 demo/               one-command demo: 830 bundled titles, no API key
 deploy/             self-host compose: env knobs + optional table map
+examples/gorse/     Gorse External Recommender compose + sync
 eval/               pairwise/NDCG harness + the demo judgments
 models/             embedding sidecar — YOUR encoders plug in here
 docs/schema.sql     canonical split schema (movies | tv) + engine views

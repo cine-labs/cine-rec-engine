@@ -4,6 +4,19 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions follow [SemVer](https://semver.org/).
 
+## [1.2.0] — 2026-11-10
+
+### Added — Gorse External Recommender support
+- **`GET /v1/gorse/recommend/{user_id}`** — thin adapter that returns a
+  raw JSON array of `{tmdb_id}:{media_type}` item IDs for Gorse’s
+  QuickJS External Recommender script (cold start → `[]`).
+- **`examples/gorse/`** — compose stack (Postgres + cine-rec + Gorse
+  0.5.11), ready `gorse-config.toml`, bootstrap + sync scripts, README.
+- **GHCR image** on version tags:
+  `ghcr.io/dovberkaplan/cine-rec-engine:{version|latest}` (release
+  workflow).
+- Docs: [docs/gorse.md](docs/gorse.md), README “Integrating with Gorse”.
+
 ## [1.1.0] — 2026-11-03
 
 ### Added — non-blocking on-demand TMDB sync (first-press latency)
