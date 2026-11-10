@@ -46,7 +46,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - uses: dtolnay/rust-toolchain@1.91.1
+      - uses: dtolnay/rust-toolchain@1.120.0
 
       - name: Build wheel (maturin)
         run: |
