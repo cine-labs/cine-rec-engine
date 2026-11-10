@@ -92,4 +92,4 @@ curl 'localhost:8087/api/recommend/42?n=5'
 ```
 
 Published image (on version tags):
-`ghcr.io/dovberkaplan/cine-rec-engine`.
+`ghcr.io/cine-labs/cine-rec-engine`.

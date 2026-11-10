@@ -14,7 +14,7 @@
 services:
   engine:
     # Prefer the published image once you have a version tag:
-    #   image: ghcr.io/dovberkaplan/cine-rec-engine:latest
+    #   image: ghcr.io/cine-labs/cine-rec-engine:latest
     build: ..
     ports:
       - "${CINE_REC_PORT:-8000}:8000"

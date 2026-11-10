@@ -80,7 +80,7 @@ jobs:
   # Official container image — same tag gate as PyPI (vX.Y.Z), but
   # independent of Trusted Publishing so a PyPI config mismatch cannot
   # block GHCR.
-  # Consumers: docker pull ghcr.io/dovberkaplan/cine-rec-engine:X.Y.Z
+  # Consumers: docker pull ghcr.io/cine-labs/cine-rec-engine:X.Y.Z
   docker:
     runs-on: ubuntu-latest
     permissions:
@@ -93,8 +93,9 @@ jobs:
         run: |
           set -eu
           VERSION="${GITHUB_REF_NAME#v}"
+          OWNER="$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "image=ghcr.io/dovberkaplan/cine-rec-engine" >> "$GITHUB_OUTPUT"
+          echo "image=ghcr.io/${OWNER}/cine-rec-engine" >> "$GITHUB_OUTPUT"
       - name: Tag and pyproject versions must agree
         run: |
           set -eu

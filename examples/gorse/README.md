@@ -53,5 +53,5 @@ Tear down: `docker compose down -v`
 
 - Point the External script at your cine-rec URL (compose uses `http://cine-rec:8000`).
 - If you set `CINE_REC_API_KEYS`, add an `X-API-Key` header inside the script.
-- Prefer the published image: `ghcr.io/dovberkaplan/cine-rec-engine:latest` instead of `build: ../..`.
+- Prefer the published image: `ghcr.io/cine-labs/cine-rec-engine:latest` instead of `build: ../..`.
 - Full write-up: [docs/gorse.md](../../docs/gorse.md).

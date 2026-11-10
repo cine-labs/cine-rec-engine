@@ -13,7 +13,7 @@ versions follow [SemVer](https://semver.org/).
 - **`examples/gorse/`** — compose stack (Postgres + cine-rec + Gorse
   0.5.11), ready `gorse-config.toml`, bootstrap + sync scripts, README.
 - **GHCR image** on version tags:
-  `ghcr.io/dovberkaplan/cine-rec-engine:{version|latest}` (release
+  `ghcr.io/cine-labs/cine-rec-engine:{version|latest}` (release
   workflow).
 - Docs: [docs/gorse.md](docs/gorse.md), README “Integrating with Gorse”.
 

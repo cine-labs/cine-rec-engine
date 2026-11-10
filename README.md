@@ -94,9 +94,9 @@ DATABASE_URL=postgresql://user:pw@localhost/yourdb \
 Or as a container (published on version tags, or build locally):
 
 ```bash
-docker pull ghcr.io/dovberkaplan/cine-rec-engine:latest
+docker pull ghcr.io/cine-labs/cine-rec-engine:latest
 docker run -p 8000:8000 -e DATABASE_URL=postgresql://user:pw@host/db \
-    ghcr.io/dovberkaplan/cine-rec-engine:latest
+    ghcr.io/cine-labs/cine-rec-engine:latest
 # or: docker build -t cine-rec-engine . && docker run ... cine-rec-engine
 ```
 
@@ -106,7 +106,7 @@ first (idempotent — same files `cine-rec init` uses):
 ```bash
 docker run -p 8000:8000 \
     -e DATABASE_URL=postgresql://user:pw@host/db \
-    -e CINE_REC_AUTO_INIT=1 ghcr.io/dovberkaplan/cine-rec-engine:latest
+    -e CINE_REC_AUTO_INIT=1 ghcr.io/cine-labs/cine-rec-engine:latest
 ```
 
 For a self-host with compose (pool sizing, persistent feedback secret,
