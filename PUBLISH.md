@@ -19,10 +19,14 @@ One-time setup (per repo, do it before the first automated release):
    `pypi` (optionally add required reviewers there for a publish approval).
 2. **PyPI** → *cine-rec-engine → Publishing → Add a pending publisher*:
    - PyPI Project: `cine-rec-engine`
-   - Owner: `DovBerKaplan`
+   - Owner: `cine-labs` (was `DovBerKaplan` before the org move)
    - Repository: `cine-rec-engine`
    - Workflow name: `release.yml`
    - Environment name: `pypi`
+
+   After a repo transfer, add a **new** trusted publisher for the new
+   owner and remove the stale one — otherwise the release job fails with
+   `invalid-publisher` / “no corresponding publisher”.
 
 Order matters only for the first tag: until both steps are done, the
 workflow fails at the publish step with an OIDC/trusted-publisher error.

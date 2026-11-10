@@ -6,7 +6,7 @@ name: release
 # One-time setup (see PUBLISH.md):
 #   GitHub: Settings → Environments → create "pypi"
 #   PyPI:   project → Publishing → add trusted publisher:
-#           DovBerKaplan / cine-rec-engine / release.yml / environment "pypi"
+#           cine-labs / cine-rec-engine / release.yml / environment "pypi"
 #
 # Then every release is just:
 #   git tag vX.Y.Z && git push origin vX.Y.Z
@@ -77,10 +77,11 @@ jobs:
         with:
           attestations: true
 
-  # Official container image — same tag gate as PyPI (vX.Y.Z).
+  # Official container image — same tag gate as PyPI (vX.Y.Z), but
+  # independent of Trusted Publishing so a PyPI config mismatch cannot
+  # block GHCR.
   # Consumers: docker pull ghcr.io/dovberkaplan/cine-rec-engine:X.Y.Z
   docker:
-    needs: publish
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -94,6 +95,15 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "image=ghcr.io/dovberkaplan/cine-rec-engine" >> "$GITHUB_OUTPUT"
+      - name: Tag and pyproject versions must agree
+        run: |
+          set -eu
+          TAG="${GITHUB_REF_NAME#v}"
+          PY="$(python3 -c 'import tomllib; print(tomllib.load(open("pyproject.toml","rb"))["project"]["version"])')"
+          PKG="$(grep -E '^__version__\s*=' cine_rec_engine/__init__.py | head -1 | cut -d'"' -f2)"
+          echo "tag=$TAG pyproject=$PY package=$PKG"
+          test "$TAG" = "$PY"
+          test "$TAG" = "$PKG"
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
